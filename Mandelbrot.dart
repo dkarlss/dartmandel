@@ -77,15 +77,10 @@ class Mandelbrot {
     resizeHandle = window.setTimeout(() => drawFrame(), 1000);
     
   }
-
+  
   List colormap(num maxval, num val) {
-    
-    return Utils.hsv(360 * val.toDouble()/(1000.0*10000.0),1,20);
-    /**
-    if (val > maxval) val = maxval;
-    int mapval = ((val/maxval) * 0xFFFFFF).toInt();
-    
-    return [mapval & 0xFF0000, mapval & 0x00FF00, mapval & 0x0000FF];*/
+    double h = (200 * val.toDouble()/(100.0*10000.0)) % 360;
+    return Utils.hsv(h ,0.999,val.toDouble()/(1.0*10000.0));
   }
   
   /**
