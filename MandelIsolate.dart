@@ -1,3 +1,4 @@
+
 // Copyright 2012 David Karlsson
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,7 +15,7 @@
 
 class MandelIsolate extends Isolate {
   
-  MandelIsolate();// : super.heavy(); since heavy isolates does not work in browser yet.
+  MandelIsolate() {}// : super.heavy(); since heavy isolates does not work in browser yet.
   
   double mandel(final double cr, final double ci, final int limit, final int iter) {
    
@@ -84,8 +85,8 @@ class MandelIsolate extends Isolate {
   }
   
   void main() {
-    
     port.receive((List params, SendPort replyTo) {
+      
       try {
         FractParam f = new FractParam(params[0],params[1],params[2],params[3],params[4],params[5],params[6],params[7]);
         var threadid = params[8];
@@ -117,13 +118,12 @@ class MandelIsolate extends Isolate {
           sList.add(v.y);
           sList.add(v.val);
         }*/
-        
+        print("Reply " + replyTo);
         replyTo.send(sList);
       } catch (Exception e) {
         print("Exception in IsolateMain: " + e.toString());
       }
     });
-    
     
   }
 

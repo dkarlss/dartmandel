@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #import('dart:html');
+#import('dart:isolate');
 #source('MandelIsolate.dart');
 #source('VPoint.dart');
 #source('FractParam.dart');
@@ -47,7 +48,11 @@ class Mandelbrot {
     
     fractParam = new FractParam(-5.1,4.0,-2.3 ,2.0 ,0,canvas.width,0,canvas.height);
     ProgressAnimation.startAnimation();
+    try {
     drawFrame();
+    } catch(Exception e) {
+      print("Exception in constr" + e);
+    }
   }
   
   void handleClick(MouseEvent e) {
@@ -63,8 +68,12 @@ class Mandelbrot {
     f.y2 = ymid + ywinsize/4;
     
     ProgressAnimation.startAnimation();
-    drawFrame();
-  }
+    try {
+      drawFrame();
+      } catch(Exception e) {
+        print("Exception in handleclick" + e);
+      }
+   }
   
   void handleresize(CanvasElement canvas) {
     canvas.width  = fractParam.dx2 = window.innerWidth  - 20;
@@ -94,7 +103,7 @@ class Mandelbrot {
     for (int i = 0; i < data.length; i+=3) {
       int x = data[i];
       int y = data[i+1];
-      int v = data[i+2];
+      num v = (data[i+2]);
       
       var index = (y * width + x) * 4;
     
@@ -118,17 +127,20 @@ class Mandelbrot {
 void spawnNew(var xstep, var xdstep, ReceivePort receivePort, int n, double x1, double x2, double y1, double y2, int dx1,
 final int dx2, int dy1, int dy2) {
     //print ("  spawnNew (x1,x2,xstep, n): $x1, $x2, $xstep, $n"); 
+    print ("Creating future");
     Future f = new MandelIsolate().spawn();
     
+    print ("Calling future");
     f.then((SendPort sendPort) {
       if (runningJobs++ == 0) {
         jobTimer.start();
         
       }
       var next = x1 + xstep;
-      // No general serialization support in dart: send list 
+      // No general serialization support in dart: send list
+      
       sendPort.send([x1, x1+xstep, y1,y2, dx1,dx1 +xdstep, dy1, dy2, n], receivePort.toSendPort());
-  });
+    });
     
   if (n-- > 0) {
     spawnNew(xstep, xdstep,receivePort,n,x1+xstep,x2,y1,y2,dx1+xdstep,dx2,dy1,dy2);
@@ -136,7 +148,6 @@ final int dx2, int dy1, int dy2) {
 }
 
 void calcsplit(ReceivePort receivePort, int n, double x1, double x2, double y1, double y2, int dx1, final int dx2, int dy1, int dy2) {
-  print("Calcsplit: x:$x1 $x2 y:$y1 $y2 dx:$dx1 $dx2 dy:$dy1 $dy2");
   double xstep = (x2-x1)/n;
   int xdstep = ((dx2-dx1)/n).toInt();
   
@@ -147,7 +158,7 @@ void calcFrame(ReceivePort receivePort, FractParam f) {
   final int MAX_X = window.innerWidth-20;
   final int MAX_Y = window.innerHeight-20;
   
-  calcsplit(receivePort, 2, f.x1, f.x2, f.y1, f.y2, f.dx1, f.dx2, f.dy1, f.dy2);
+  calcsplit(receivePort, 4, f.x1, f.x2, f.y1, f.y2, f.dx1, f.dx2, f.dy1, f.dy2);
 }
 
 void setFractParams(double x1, double x2, double y1, double y2) {
@@ -160,7 +171,9 @@ void setFractParams(double x1, double x2, double y1, double y2) {
 
 void drawFrame() {
     
-    final receivePort = new ReceivePort();
+    final ReceivePort receivePort = new ReceivePort();
+    
+    
     receivePort.receive((List message, SendPort notUsedHere) {
       try {
         if (--runningJobs == 0) {
